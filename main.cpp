@@ -9,18 +9,18 @@
 using namespace CryptoPP;
 
 // Функция для генерации ключей RSA
-void GenerateRSAKeys(Integer& n, Integer& e, Integer& d) {
+void GenerateRSAKeys(RSA::PrivateKey& privateKey, Integer& n, Integer& e, Integer& d) {
     AutoSeededRandomPool rng;
     InvertibleRSAFunction params;
-    params.SetPublicExponent(65537);
+    //params.SetPublicExponent(65537);
     params.GenerateRandomWithKeySize(rng, 2048);
-    const Integer& privateKey = params.GetPrivateExponent();
-    const Integer& publicKey = params.GetPublicExponent();
+    privateKey = RSA::PrivateKey(params);
+    //const RSA::PublicKey& publicKey = params.GetPublicKey();
     const Integer& modulus = params.GetModulus();
 
     n = modulus;
-    e = publicKey;
-    d = privateKey;
+    e = params.GetPublicExponent();
+    d = privateKey.GetPrivateExponent();
 }
 
 // Функция для шифрования текста
@@ -43,10 +43,10 @@ std::string RSAEncrypt(const std::string& plaintext, const Integer& e, const Int
 }
 
 // Функция для расшифрования текста
-std::string RSADecrypt(const std::string& ciphertext, const Integer& d, const Integer& n) {
+std::string RSADecrypt(const std::string& ciphertext, const Integer& d, const Integer& n, const Integer& e) {
     AutoSeededRandomPool rng;
     InvertibleRSAFunction params;
-    params.Initialize(d, Integer(), n);
+    params.Initialize(n, e, d);
     RSA::PrivateKey privateKey(params);
 
     std::string decrypted;
@@ -64,15 +64,16 @@ std::string RSADecrypt(const std::string& ciphertext, const Integer& d, const In
 
 int main() {
     Integer p, q, n, e, d;
+    RSA::PrivateKey privateKey;
 
     // Генерация ключей
-    GenerateRSAKeys(n, e, d);
+    GenerateRSAKeys(privateKey, n, e, d);
 
     // Вывод параметров RSA
     std::cout << "Generated RSA Parameters:" << std::endl;
-    std::cout << "n: " << std::hex << n << std::endl;
-    std::cout << "e: " << std::hex << e << std::endl;
-    std::cout << "d: " << std::hex << d << std::endl;
+    std::cout << "n: " << n << std::endl;
+    std::cout << "e: " << e << std::endl;
+    std::cout << "d: " << d << std::endl;
 
     std::string plaintext;
     std::cout << "Enter plaintext: ";
@@ -86,9 +87,10 @@ int main() {
     std::cout << "Encrypted text: " << encrypted << std::endl;
     std::cout << "Encryption Time: " << elapsed_encrypt << " seconds" << std::endl;
     //std::cout << "d (hex): " << std::hex << d << std::endl;
+
     // Расшифрование
     clock_t start_decrypt = clock();
-    std::string decrypted = RSADecrypt(encrypted, d, n);
+    std::string decrypted = RSADecrypt(encrypted, d, n, e);
     clock_t end_decrypt = clock();
     double elapsed_decrypt = double(end_decrypt - start_decrypt) / CLOCKS_PER_SEC;
     std::cout << "Decrypted text: " << decrypted << std::endl;
