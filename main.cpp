@@ -37,9 +37,8 @@ Integer ModuloInverse(const Integer& a, const Integer& n) {
 void GenerateRSAKeys(RSA::PrivateKey& privateKey, Integer& n, Integer& e, Integer& d) {
     AutoSeededRandomPool rng;
     InvertibleRSAFunction params;
-    std::string question = " ";
     unsigned int size;
-    std::cout << "Enter key size (at least 128 bits):" << std::endl; 
+    std::cout << "Enter key size (at least 1024 bits):" << std::endl; 
     std::cin >> size;
     std::cout << "Generating primes..." << std::endl;
     params.GenerateRandomWithKeySize(rng, size);
@@ -57,7 +56,7 @@ void GenerateRSAKeys(RSA::PrivateKey& privateKey, Integer& n, Integer& e, Intege
 
 
 void InitializeRSAKeys(RSA::PrivateKey& privateKey, const Integer& p, const Integer& q) {
-    AutoSeededRandomPool rng;
+    
     InvertibleRSAFunction params;
     
     Integer u = EuclideanMultiplicativeInverse(q, p);
@@ -82,7 +81,7 @@ std::string RSAEncrypt(const std::string& plaintext, const Integer& e, const Int
     publicKey.Initialize(n, e);
 
     std::string encrypted;
-    RSAES_PKCS1v15_Encryptor encryptor(publicKey);
+    RSAES_OAEP_SHA256_Encryptor encryptor(publicKey);
 
     StringSource(plaintext, true,
         new PK_EncryptorFilter(
@@ -102,7 +101,7 @@ std::string RSADecrypt(const std::string& ciphertext, const Integer& d, const In
     RSA::PrivateKey privateKey(params);
 
     std::string decrypted;
-    RSAES_PKCS1v15_Decryptor decryptor(privateKey);
+    RSAES_OAEP_SHA256_Decryptor decryptor(privateKey);
 
     StringSource(ciphertext, true,
         new PK_DecryptorFilter(
@@ -217,7 +216,7 @@ void decrypt() {
     double elapsed_decrypt = double(end_decrypt - start_decrypt) / CLOCKS_PER_SEC;
     std::cout << "Decrypted text: " << decrypted << std::endl;
     std::cout << "Decryption Time: " << elapsed_decrypt << " seconds" << std::endl;
-
+    
 }
 
 int main() {
